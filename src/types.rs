@@ -157,6 +157,12 @@ pub struct ToolInvocation {
     pub tool_name: String,
     #[serde(default)]
     pub arguments: Option<serde_json::Value>,
+    /// W3C Trace Context `traceparent` from the CLI's execute_tool span.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub traceparent: Option<String>,
+    /// W3C Trace Context `tracestate` from the CLI's execute_tool span.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tracestate: Option<String>,
 }
 
 impl ToolInvocation {
@@ -2109,5 +2115,35 @@ mod tests {
         let value = serde_json::to_value(&config).unwrap();
         assert_eq!(value["clientName"], "my-cli");
         assert_eq!(value["agent"], "helper");
+    }
+
+    #[test]
+    fn test_tool_invocation_deserialize_with_trace_fields() {
+        let json = serde_json::json!({
+            "sessionId": "s1",
+            "toolName": "my_tool",
+            "toolCallId": "call-1",
+            "arguments": {"key": "value"},
+            "traceparent": "00-abc-def-01",
+            "tracestate": "vendor=val"
+        });
+        let invocation: ToolInvocation = serde_json::from_value(json).unwrap();
+        assert_eq!(invocation.tool_name, "my_tool");
+        assert_eq!(invocation.traceparent.as_deref(), Some("00-abc-def-01"));
+        assert_eq!(invocation.tracestate.as_deref(), Some("vendor=val"));
+    }
+
+    #[test]
+    fn test_tool_invocation_deserialize_without_trace_fields() {
+        let json = serde_json::json!({
+            "sessionId": "s1",
+            "toolName": "my_tool",
+            "toolCallId": "call-1",
+            "arguments": {"key": "value"}
+        });
+        let invocation: ToolInvocation = serde_json::from_value(json).unwrap();
+        assert_eq!(invocation.tool_name, "my_tool");
+        assert!(invocation.traceparent.is_none());
+        assert!(invocation.tracestate.is_none());
     }
 }

@@ -572,6 +572,10 @@ pub struct ExternalToolRequestedData {
     pub tool_call_id: Option<String>,
     /// Arguments to pass to the tool handler.
     pub arguments: Option<serde_json::Value>,
+    /// W3C traceparent header propagated from the CLI (if tracing is active).
+    pub traceparent: Option<String>,
+    /// W3C tracestate header propagated from the CLI (if tracing is active).
+    pub tracestate: Option<String>,
 }
 
 /// Data for `permission.requested` event (protocol v3 broadcast model).
@@ -974,6 +978,32 @@ mod tests {
                 assert_eq!(data.tool_name.as_deref(), Some("echo"));
                 assert_eq!(data.tool_call_id.as_deref(), Some("call_456"));
                 assert_eq!(data.arguments.as_ref().unwrap()["text"], "hello");
+            }
+            other => panic!("Expected ExternalToolRequested, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_parse_external_tool_requested_with_trace_context() {
+        let json = json!({
+            "id": "evt_trace",
+            "timestamp": "2024-01-15T10:30:02Z",
+            "type": "external_tool.requested",
+            "data": {
+                "requestId": "req_t1",
+                "toolName": "echo",
+                "toolCallId": "call_t1",
+                "arguments": { "text": "hi" },
+                "traceparent": "00-abc123-def456-01",
+                "tracestate": "vendor=value"
+            }
+        });
+
+        let event = SessionEvent::from_json(&json).unwrap();
+        match &event.data {
+            SessionEventData::ExternalToolRequested(data) => {
+                assert_eq!(data.traceparent.as_deref(), Some("00-abc123-def456-01"));
+                assert_eq!(data.tracestate.as_deref(), Some("vendor=value"));
             }
             other => panic!("Expected ExternalToolRequested, got {other:?}"),
         }

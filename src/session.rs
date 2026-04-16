@@ -380,12 +380,16 @@ impl Session {
     /// Returns the message ID.
     pub async fn send(&self, options: impl Into<MessageOptions>) -> Result<String> {
         let options = options.into();
-        let params = serde_json::json!({
+        #[allow(unused_mut)]
+        let mut params = serde_json::json!({
             "sessionId": self.session_id,
             "prompt": options.prompt,
             "attachments": options.attachments,
             "mode": options.mode,
         });
+
+        #[cfg(feature = "opentelemetry")]
+        crate::otel::inject_trace_context(&mut params);
 
         let result = (self.invoke_fn)("session.send", Some(params)).await?;
 

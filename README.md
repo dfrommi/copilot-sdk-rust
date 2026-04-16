@@ -201,6 +201,16 @@ let client = Client::builder()
     .build()?;
 ```
 
+#### Trace Context Propagation
+
+Enable the `opentelemetry` feature to automatically propagate W3C Trace Context (`traceparent`/`tracestate`) from your app into every JSON-RPC call to the CLI. This links your application spans with the CLI's internal spans in the same distributed trace.
+
+```toml
+copilot-sdk = { version = "0.1", features = ["opentelemetry"] }
+```
+
+No wiring is required. Before each `session.create`, `session.resume`, and `session.send` call, the SDK reads the current `opentelemetry::Context` using a local W3C `TraceContextPropagator` and injects the headers into the request. If no span is active, nothing is injected.
+
 ### BYOK (Bring Your Own Key)
 
 Use your own API keys with compatible providers, with custom model listing:

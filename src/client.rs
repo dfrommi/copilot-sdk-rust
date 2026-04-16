@@ -705,7 +705,11 @@ impl Client {
         }
 
         // Build the request
-        let params = serde_json::to_value(&config)?;
+        #[allow(unused_mut)]
+        let mut params = serde_json::to_value(&config)?;
+
+        #[cfg(feature = "opentelemetry")]
+        crate::otel::inject_trace_context(&mut params);
 
         // Send the request
         let result = self.invoke("session.create", Some(params)).await?;
@@ -760,6 +764,9 @@ impl Client {
         // Build the request
         let mut params = serde_json::to_value(&config)?;
         params["sessionId"] = json!(session_id);
+
+        #[cfg(feature = "opentelemetry")]
+        crate::otel::inject_trace_context(&mut params);
 
         // Send the request
         let result = self.invoke("session.resume", Some(params)).await?;

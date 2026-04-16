@@ -45,6 +45,9 @@ pub mod tools;
 pub mod transport;
 pub mod types;
 
+#[cfg(feature = "opentelemetry")]
+pub(crate) mod otel;
+
 // Re-export tool utilities
 pub use tools::define_tool;
 

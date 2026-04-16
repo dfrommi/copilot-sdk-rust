@@ -41,6 +41,10 @@ which = "7"
 
 schemars = { version = "0.8", optional = true, features = ["derive"] }
 
+# OpenTelemetry (optional — enabled via `opentelemetry` feature)
+opentelemetry = { version = "0.31", optional = true }
+opentelemetry_sdk = { version = "0.31", optional = true }
+
 [dev-dependencies]
 tokio-test = "0.4"
 pretty_assertions = "1"
@@ -54,6 +58,7 @@ default = []
 e2e = []  # Enable E2E tests that require real Copilot CLI
 snapshots = [] # Enable snapshot-based conformance tests
 schemars = ["dep:schemars"] # Derive tool JSON schemas from Rust types
+opentelemetry = ["dep:opentelemetry", "dep:opentelemetry_sdk"] # Auto-propagate W3C Trace Context via OpenTelemetry
 
 [package.metadata.docs.rs]
 rustdoc-args = ["--cfg", "docsrs"]
